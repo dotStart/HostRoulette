@@ -22,7 +22,7 @@ export default {
   data: function () {
     return {
       initialized: false,
-      loading: true,
+      loading: false,
       knownValues: [],
       selected: [],
     }
