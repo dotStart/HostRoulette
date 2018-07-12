@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <title>Host Roulette</title>
+    <meta name="description" content="Randomly choose people to host" />
+    <meta name="keywords" content="twitch,host,raid,roulette,random,randomizer" />
+    <meta name="robots" content="index,follow" />
+
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.css" />
+
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.3/semantic.min.js"></script>
+  </head>
+  <body>
+    <main id="roulette">
+      <main id="roulette-container"
+            class="ui vertical very padded center aligned violet inverted segment">
+        <section class="ui container">
+          <roulette-wheel :settings="settings" v-on:spin="onSpin"
+                          v-on:result="acceptResult" v-on:no-content="showNoContentWarning()"></roulette-wheel>
+
+          <div id="roulette-options" class="ui center aligned middle aligned grid">
+            <div class="row">
+              <div class="five wide column">
+                <div class="ui fluid action left icon input">
+                  <i class="options icon"></i>
+                  <input type="text" readonly
+                         :value="'/host ' + (result !== null ? result.user.login : 'dotStart')" />
+                  <button class="ui blue icon button"><i class="copy icon"></i></button>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="five wide column">
+                <game-selector v-model="settings.games"
+                               v-on:change="updateSettings"></game-selector>
+              </div>
+              <div class="five wide column">
+                <community-selector v-model="settings.communities"
+                                    v-on:change="updateSettings"></community-selector>
+              </div>
+              <div class="five wide column">
+                <language-selector v-model="settings.languages"
+                                   v-on:change="updateSettings"></language-selector>
+              </div>
+            </div>
+            <div class="row">
+              <div class="five wide column">
+                <div :class="'ui checkbox' + (!storageAvailable ? ' disabled' : '')">
+                  <input type="checkbox" v-model="store" v-on:change="changeStorageSettings" />
+                  <label>Store My Settings</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p class="statistic">
+            Wheel has been spinned {{ statistics.spins.toLocaleString() }} times today,
+          {{ statistics.channels.toLocaleString() }} channels with
+          {{ statistics.viewers.toLocaleString() }} viewers in rotation
+          </p>
+
+          <p class="help">
+            <small>
+              By ticking the "Store My Settings" checkbox you agree to permanently store these
+              settings inside of your browser<br />
+              You may revoke these permissions at any time by un-ticking this checkbox again
+            </small>
+          </p>
+        </section>
+      </main>
+      <main id="manual-container" class="ui vertical very padded segment">
+        <section class="ui equal width divided container grid">
+          <div class="row">
+            <div class="column">
+              <h2 class="ui header">How to</h2>
+
+              <ol>
+                <li><strong>(Recommended)</strong> Customize the filters
+                </li>
+                <li><strong>(Optional)</strong> Check the "Store My Settings" checkbox to retain
+                  these settings
+                </li>
+                <li>Click "Spin"</li>
+                <li>Wait for the wheel to stop</li>
+                <li>Check out the selected channel</li>
+                <li>Copy the host command</li>
+                <li>Paste it into your chat window</li>
+                <li>Spread the love</li>
+              </ol>
+
+              <h2 class="ui header">About this Site</h2>
+
+              <p>
+                This site is completely open source and made available under the terms of the
+                <a href="https://www.apache.org/licenses/LICENSE-2.0.txt">Apache License, Version
+                  2.0</a>. You are welcome to
+                <a href="https://github.com/dotStart/HostRoulette">fork</a> this project to submit
+                your own features, fix bugs, improve the design or even run a mirror of this site.
+              </p>
+
+              <p>
+                If you are considering to submit larger changes, please talk to us first (you may
+                find the respective contact methods in the footer of this page).
+              </p>
+            </div>
+            <div class="column">
+              <h2 class="ui header">FAQ</h2>
+
+              <h5 class="ui header">Why?</h5>
+              <p>
+                I wanted to provide streamers (and especially smaller channels) with a better method
+                of supporting each other and finding new friends. Hosting is an
+                important method for discovering new channels and thus the ideal method to achieve
+                this goal. A host of as little as one or two viewers can go a long way!
+              </p>
+
+              <h5 class="ui header">How does it work?</h5>
+              <p>
+                Once you click spin, the server will automatically search for channels which match
+                your criteria and a random channel will be chosen from the resulting list.
+              </p>
+
+              <h5 class="ui header">Channel X is matching the criteria but does not show up?</h5>
+              <p>
+                We employ some basic caching mechanics to reduce the stress on our and Twitch's
+                servers. As such, channels may sometimes take a little bit to be considered. If the
+                problem persists, please contact us (social media and other channels can be found at
+                the bottom of the page).
+              </p>
+
+              <h5 class="ui header">Why does the wheel select large channels?</h5>
+              <p>
+                Due to limitations within the new Twitch API, we're unable to actually pull the
+                smallest channels from the list under some circumstances. We hope that Twitch will
+                improve upon their API in the future in order to allow a more consistent behavior.
+              </p>
+
+              <p>
+                In the meantime we recommend to use more precise filters (specify a game, community
+                and/or language).
+              </p>
+
+              <h5 class="ui header">How can I support this project?</h5>
+              <p>
+                Share it! The more people know about this feature, the better! With every spin you
+                are not only supporting my projects but you are also supporting other streamers!
+              </p>
+
+              <h5 class="ui header">Can I support this and similar projects in any other way?</h5>
+              <p>
+                Just give me a shout out or consider hosting
+                <a href="https://twitch.tv/dotStart">my channel</a> every once in a while (when you
+                aren't supporting smaller streamers that is). You may also find some other ways to
+                help me on my channel page.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <div id="warning-no-filters" class="ui basic modal">
+          <div class="ui icon header">
+            <i class="filter icon"></i>
+            Muh filters!
+          </div>
+          <div class="content">
+            <p>
+              Specify at least one filter (a community, game or language) before you spin the wheel!
+            </p>
+          </div>
+          <div class="actions">
+            <div class="ui green ok inverted button">Engage!</div>
+            <div class="ui red cancel inverted button">I'm scared</div>
+          </div>
+        </div>
+        <div id="warning-no-content" class="ui basic modal">
+          <div class="ui icon header">
+            <i class="filter icon"></i>
+            I can haz streams?
+          </div>
+          <div class="content">
+            <p>
+              Your filters are too restrictive! We couldn't find a single stream within the given
+              parameters!
+            </p>
+
+            <p>
+              Try choosing or combining different communities, games and languages for the best
+              results.
+            </p>
+          </div>
+          <div class="actions">
+            <div class="ui green ok inverted button">Okay</div>
+          </div>
+        </div>
+      </main>
+      <footer id="page-footer" class="ui vertical very padded inverted segment">
+        <section class="ui container grid">
+          <div class="four wide column">
+            <h5 class="ui inverted header">About Host Roulette</h5>
+
+            <div class="ui vertical inverted link list">
+              <a class="item" href="https://github.com/dotStart/HostRoulette">GitHub</a>
+            </div>
+          </div>
+          <div class="four wide column">
+            <h5 class="ui inverted header">Social Media</h5>
+
+            <div class="ui vertical inverted link list">
+              <a class="item" href="https://twitch.tv/dotStart">Twitch</a>
+              <a class="item" href="https://discord.gg/RdFqysd">Discord</a>
+              <a class="item" href="https://twitter.com/dot_start">Twitter</a>
+              <a class="item" href="https://webchat.esper.net/?join=%23.start">IRC</a>
+              <a class="item" href="https://github.com/dotStart">GitHub</a>
+            </div>
+          </div>
+          <div class="eight wide right aligned column">
+            <p class="copyright">
+              Copyright &copy; 2018 .start<br />
+              <a href="https://unsplash.com/photos/siMO8TWzLYM">Background image</a> by <a
+                href="https://unsplash.com/@kylenieber">Kyle Nieber</a> (via Unsplash)
+            </p>
+          </div>
+        </section>
+
+        <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0">
+          <defs>
+            <clipPath id="circleSegment">
+              <path d="M76.56,200,153.11,15.18A200.63,200.63,0,0,0,0,15.18Z" />
+            </clipPath>
+          </defs>
+        </svg>
+      </footer>
+    </main>
+  </body>
+</html>
