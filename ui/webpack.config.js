@@ -36,7 +36,7 @@ module.exports = {
         loader: "babel-loader"
       },
       {
-        test: /\.(png|woff|woff2|eot|ttf|jpg|svg)$/,
+        test: /\.(ico|png|woff|woff2|eot|ttf|jpg|svg)$/,
         loader: 'file-loader',
         options: {
           name: 'resources/[name].[ext]'
