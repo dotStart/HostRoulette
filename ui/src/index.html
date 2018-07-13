@@ -35,9 +35,9 @@
               <div class="five wide column">
                 <div class="ui fluid action left icon input">
                   <i class="options icon"></i>
-                  <input type="text" readonly
+                  <input id="host-command" type="text" readonly
                          :value="'/host ' + (result !== null ? result.user.login : 'dotStart')" />
-                  <button class="ui blue icon button"><i class="copy icon"></i></button>
+                  <button id="copy-button" data-clipboard-target="#host-command" class="ui blue icon button"><i class="copy icon"></i></button>
                 </div>
               </div>
             </div>

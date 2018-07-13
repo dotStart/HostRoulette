@@ -16,6 +16,7 @@
  */
 import axios from 'axios';
 import Vue from 'vue';
+import ClipboardJS from 'clipboard';
 import CommunitySelector from './lib/CommunitySelector';
 import GameSelector from './lib/GameSelector';
 import LanguageSelector from './lib/LanguageSelector';
@@ -52,6 +53,9 @@ const app = new Vue({
 
     // wheel
     result: null,
+  },
+  mounted: function() {
+    new ClipboardJS('#copy-button');
   },
   computed: {
     storageAvailable: function () {
