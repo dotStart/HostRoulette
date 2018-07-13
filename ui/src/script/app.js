@@ -113,6 +113,19 @@ const app = new Vue({
         cb();
       }
     },
+    onError: function (errorType) {
+      switch (errorType) {
+        case 'rate-limit':
+          $('#warning-rate-limit').modal({
+            blurring: true,
+          }).modal('show');
+          break;
+        default:
+          $('#warning-server-error').modal({
+            blurring: true
+          }).modal('show');
+      }
+    },
     acceptResult: function (result) {
       this.result = result;
     },

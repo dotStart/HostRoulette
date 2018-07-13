@@ -22,10 +22,13 @@ import (
   "github.com/dotStart/HostRoulette/twitch"
   "math/rand"
   "net/http"
+  "time"
 )
 
 const WheelRequests = 3
 const WheelSelectionPool = 32
+const WheelRateLimit = 5
+const WheelRateLimitDuration = time.Minute * 5
 
 type wheelSettings struct {
   Communities []string `json:"communities"`
@@ -40,8 +43,9 @@ type WheelSelection struct {
 }
 
 func (s *Server) HandleWheel(w http.ResponseWriter, req *http.Request) {
+  s.writeHeaders(w)
+
   if req.Method == "OPTIONS" {
-    s.writeHeaders(w)
     return
   }
 
@@ -50,9 +54,26 @@ func (s *Server) HandleWheel(w http.ResponseWriter, req *http.Request) {
     return
   }
 
+  addr := getAddress(req)
+  rateLimit, err := s.cacheClient.GetRateLimitUsage(addr)
+  if err != nil {
+    s.logger.Errorf("cannot query cache backend for rate limit of address \"%s\": %s", addr, err)
+    rateLimit = 0
+  }
+  w.Header().Set("X-Rate-Limit", fmt.Sprintf("%d", WheelRateLimit))
+  w.Header().Set("X-Rate-Limit-Remaining", fmt.Sprintf("%d", WheelRateLimit-rateLimit-1))
+  if rateLimit >= WheelRateLimit {
+    w.WriteHeader(http.StatusTooManyRequests)
+    return
+  }
+  err = s.cacheClient.IncrementRateLimitUsage(addr, WheelRateLimitDuration)
+  if err != nil {
+    s.logger.Error("cannot increment rate limit utilization of address \"%s\": %s", addr, err)
+  }
+
   settings := &wheelSettings{}
   defer req.Body.Close()
-  err := json.NewDecoder(req.Body).Decode(settings)
+  err = json.NewDecoder(req.Body).Decode(settings)
   if err != nil {
     s.logger.Errorf("failed to decode wheel request body: %s", err)
     http.Error(w, "failed to decode request", http.StatusServiceUnavailable)
@@ -68,7 +89,6 @@ func (s *Server) HandleWheel(w http.ResponseWriter, req *http.Request) {
   s.logger.Debugf("found %d qualifying streams", len(streams))
 
   if len(streams) == 0 {
-    s.writeHeaders(w)
     w.WriteHeader(http.StatusNoContent)
     return
   }
@@ -119,8 +139,6 @@ func (s *Server) HandleWheel(w http.ResponseWriter, req *http.Request) {
     if len(streams) == 0 {
       if len(selection) == 0 {
         s.logger.Debugf("stream list exceeded without alternatives")
-
-        s.writeHeaders(w)
         w.WriteHeader(http.StatusNoContent)
         return
       }
@@ -148,7 +166,6 @@ func (s *Server) HandleWheel(w http.ResponseWriter, req *http.Request) {
   }
 
   s.incrementSpinCount()
-  s.writeHeaders(w)
   w.Header().Set("Content-Type", "application/json")
   json.NewEncoder(w).Encode(&selection)
 }

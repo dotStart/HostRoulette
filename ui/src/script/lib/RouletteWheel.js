@@ -150,6 +150,21 @@ export default {
           this.spinning = true;
           this.velocity = Math.random() * VELOCITY_SPIN_RANGE
               + VELOCITY_SPIN_MINIMUM;
+        }).catch((error) => {
+          this.loading = false;
+
+          if (!error.response) {
+            this.$emit('error', 'unknown');
+            return
+          }
+
+          let errorType = 'unknown';
+          switch (error.response.status) {
+            case 429:
+              errorType = 'rate-limit';
+              break;
+          }
+          this.$emit('error', errorType);
         });
       });
     }

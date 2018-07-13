@@ -25,6 +25,7 @@ import "github.com/hashicorp/hcl2/gohcl"
 type ServerConfig struct {
   BindAddress string         `hcl:"bind-address,attr"`
   Auth        Authentication `hcl:"auth,block"`
+  Cache       CacheConfig    `hcl:"cache,block"`
   Search      SearchConfig   `hcl:"search,block"`
 }
 

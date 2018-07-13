@@ -17,11 +17,13 @@
 package server
 
 import (
+  "github.com/dotStart/HostRoulette/cache"
   "github.com/dotStart/HostRoulette/search"
   "github.com/dotStart/HostRoulette/twitch"
   "github.com/op/go-logging"
   "math/rand"
   "net/http"
+  "strings"
   "sync"
   "time"
 )
@@ -29,6 +31,7 @@ import (
 type Server struct {
   logger       *logging.Logger
   search       *search.Client
+  cacheClient  *cache.Cache
   twitchClient *twitch.Client
 
   CorsDisabled bool
@@ -41,12 +44,13 @@ type Server struct {
   spinCounter            uint64
 }
 
-func New(mux *http.ServeMux, search *search.Client, twitchClient *twitch.Client) *Server {
+func New(mux *http.ServeMux, search *search.Client, cacheClient *cache.Cache, twitchClient *twitch.Client) *Server {
   rand.Seed(time.Now().Unix())
 
   srv := &Server{
     logger:                 logging.MustGetLogger("srv"),
     search:                 search,
+    cacheClient:            cacheClient,
     twitchClient:           twitchClient,
     twitchStatisticsTicker: time.NewTicker(time.Minute * 30),
     twitchStatistics:       &twitch.Statistics{},
@@ -73,4 +77,22 @@ func (s *Server) writeHeaders(w http.ResponseWriter) {
     w.Header().Set("Access-Control-Allow-Methods", "GET,POST")
     w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
   }
+}
+
+func getAddress(req *http.Request) string {
+  forward := req.Header.Get("X-Forwarded-For")
+  if forward != "" {
+    return forward
+  }
+
+  index := strings.LastIndex(req.RemoteAddr, ":")
+  if index == -1 {
+    return req.RemoteAddr
+  }
+
+  addr := req.RemoteAddr[:index]
+  if !strings.HasPrefix(addr, "[") {
+    return addr
+  }
+  return addr[1 : len(addr)-1]
 }

@@ -20,6 +20,7 @@ import (
   "context"
   "flag"
   "fmt"
+  "github.com/dotStart/HostRoulette/cache"
   "github.com/dotStart/HostRoulette/config"
   "github.com/dotStart/HostRoulette/search"
   "github.com/dotStart/HostRoulette/server"
@@ -110,6 +111,11 @@ func (s *ServerCommand) Execute(_ context.Context, f *flag.FlagSet, _ ...interfa
     fmt.Fprintf(os.Stderr, "error: failed to connect to elasticsearch: %s", err)
     return 1
   }
+  cacheClient, err := cache.New(&cfg.Cache)
+  if err != nil {
+    fmt.Fprintf(os.Stderr, "error: failed to connect to cache backend: %s", err)
+    return 1
+  }
   twitchClient, err := twitch.NewClient(&cfg.Auth)
   if err != nil {
     fmt.Fprintf(os.Stderr, "error: failed to establish connection with Twitch: %s", err)
@@ -124,7 +130,7 @@ func (s *ServerCommand) Execute(_ context.Context, f *flag.FlagSet, _ ...interfa
   }
   defer srv.Close()
 
-  api := server.New(mux, srch, twitchClient)
+  api := server.New(mux, srch, cacheClient, twitchClient)
   if s.flagDevMode {
     api.CorsDisabled = true
     s.logger.Debugf("development mode has been enabled")

@@ -26,7 +26,9 @@
             class="ui vertical very padded center aligned violet inverted segment">
         <section class="ui container">
           <roulette-wheel :settings="settings" v-on:spin="onSpin"
-                          v-on:result="acceptResult" v-on:no-content="showNoContentWarning()"></roulette-wheel>
+                          v-on:result="acceptResult"
+                          v-on:no-content="showNoContentWarning()"
+                          v-on:error="onError"></roulette-wheel>
 
           <div id="roulette-options" class="ui center aligned middle aligned grid">
             <div class="row">
@@ -196,6 +198,36 @@
               Seems like there are currently no streams which match the filters you specified. Try
               selecting some more liberal filters (for instance by removing one of the filters or
               adding additional permitted values).
+            </p>
+          </div>
+          <div class="actions">
+            <div class="ui green ok inverted button">Okay</div>
+          </div>
+        </div>
+        <div id="warning-rate-limit" class="ui basic modal">
+          <div class="ui icon header">
+            <i class="time icon"></i>
+            I'm dizzy!
+          </div>
+          <div class="content">
+            <p>
+              Seems like you are spinning the wheel a little too much (or we might be over
+              capacity). Please wait a little bit before spinning the wheel again.
+            </p>
+          </div>
+          <div class="actions">
+            <div class="ui green ok inverted button">Okay</div>
+          </div>
+        </div>
+        <div id="warning-server-error" class="ui basic modal">
+          <div class="ui icon header">
+            <i class="bug icon"></i>
+            Gratz! You broke it!
+          </div>
+          <div class="content">
+            <p>
+              It seems like our servers are currently unable to respond to your requests. Please try
+              again at a later time.
             </p>
           </div>
           <div class="actions">
