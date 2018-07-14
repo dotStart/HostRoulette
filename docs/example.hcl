@@ -1,7 +1,9 @@
 bind-address = "0.0.0.0:8090"
 
 search {
-  url = "http://192.168.2.10:9200"
+  addresses = [
+    "http://localhost:9200"
+  ]
 }
 
 cache {

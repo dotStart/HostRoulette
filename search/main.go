@@ -30,7 +30,11 @@ type Client struct {
 }
 
 func New(cfg *config.SearchConfig) (*Client, error) {
-  search, err := elastic.NewClient(elastic.SetURL(cfg.Url))
+  if len(cfg.Addresses) == 0 {
+    return nil, fmt.Errorf("no search servers available")
+  }
+
+  search, err := elastic.NewClient(elastic.SetURL(cfg.Addresses...))
   if err != nil {
     return nil, fmt.Errorf("cannot establish connection to elasticsearch: %s", err)
   }
@@ -40,12 +44,14 @@ func New(cfg *config.SearchConfig) (*Client, error) {
     search: search,
   }
 
-  pong, code, err := search.Ping(cfg.Url).Do(context.Background())
-  if err != nil {
-    return nil, fmt.Errorf("cannot ping document store: %s", err)
+  cl.logger.Infof("Evaluating search node statuses:")
+  for i, addr := range cfg.Addresses {
+    pong, _, err := search.Ping(addr).Do(context.Background())
+    if err != nil {
+      return nil, fmt.Errorf("cannot ping document store: %s", err)
+    }
+    cl.logger.Infof("Node #%02d - ElasticSearch v%s of cluster %s (Commit Hash: %s; Timestamp: %s)", i, pong.Version.Number, pong.ClusterName, pong.Version.BuildHash, pong.Version.BuildTimestamp)
   }
-  cl.logger.Infof("Established connection to document store (code: %d)", code)
-  cl.logger.Infof("Connected to ElasticSearch v%s of cluster %s (Commit Hash: %s; Timestamp: %s)", pong.Version.Number, pong.ClusterName, pong.Version.BuildHash, pong.Version.BuildTimestamp)
 
   err = cl.init()
   if err != nil {

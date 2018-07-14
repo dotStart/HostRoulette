@@ -17,5 +17,5 @@
 package config
 
 type SearchConfig struct {
-  Url string `hcl:"url,attr"`
+  Addresses []string `hcl:"addresses,attr"`
 }
