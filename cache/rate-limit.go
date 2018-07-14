@@ -18,30 +18,21 @@ package cache
 
 import (
   "fmt"
-  "github.com/go-redis/redis"
   "time"
 )
 
-// retrieves the rate limit usage for the given remote address
-func (c *Cache) GetRateLimitUsage(addr string) (uint64, error) {
-  c.logger.Debugf("retrieving rate limit usage for address \"%s\"", addr)
-
-  value, err := c.client.Get(fmt.Sprintf("rate_limit_%s", calculateHash(addr))).Uint64()
-  if err == redis.Nil {
-    return 0, nil
-  }
-  return value, err
-}
-
 // increments teh rate limit usage for the given address
-func (c *Cache) IncrementRateLimitUsage(addr string, ttl time.Duration) error {
+func (c *Cache) IncrementRateLimitUsage(addr string, ttl time.Duration) (uint64, error) {
   c.logger.Debugf("incrementing rate limit usage for address \"%s\"", addr)
-
   key := fmt.Sprintf("rate_limit_%s", calculateHash(addr))
-  err := c.client.Incr(key).Err()
+
+  pipe := c.client.TxPipeline()
+  incr := pipe.Incr(key)
+  pipe.Expire(key, ttl)
+  _, err := pipe.Exec()
   if err != nil {
-    return err
+    return 0, err
   }
 
-  return c.client.Expire(key, ttl).Err()
+  return uint64(incr.Val()), nil
 }

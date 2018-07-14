@@ -55,20 +55,22 @@ func (s *Server) HandleWheel(w http.ResponseWriter, req *http.Request) {
   }
 
   addr := getAddress(req)
-  rateLimit, err := s.cacheClient.GetRateLimitUsage(addr)
+  rateLimit, err := s.cacheClient.IncrementRateLimitUsage(addr, WheelRateLimitDuration)
   if err != nil {
     s.logger.Errorf("cannot query cache backend for rate limit of address \"%s\": %s", addr, err)
     rateLimit = 0
   }
+
+  remainingLimit := WheelRateLimit - rateLimit
+  if remainingLimit < 0 {
+    remainingLimit = 0
+  }
   w.Header().Set("X-Rate-Limit", fmt.Sprintf("%d", WheelRateLimit))
-  w.Header().Set("X-Rate-Limit-Remaining", fmt.Sprintf("%d", WheelRateLimit-rateLimit-1))
+  w.Header().Set("X-Rate-Limit-Remaining", fmt.Sprintf("%d", remainingLimit))
+
   if rateLimit >= WheelRateLimit {
     w.WriteHeader(http.StatusTooManyRequests)
     return
-  }
-  err = s.cacheClient.IncrementRateLimitUsage(addr, WheelRateLimitDuration)
-  if err != nil {
-    s.logger.Error("cannot increment rate limit utilization of address \"%s\": %s", addr, err)
   }
 
   settings := &wheelSettings{}
