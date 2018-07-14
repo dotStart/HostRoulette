@@ -72,6 +72,7 @@ func (s *Server) writeHeaders(w http.ResponseWriter) {
     w.Header().Set("Access-Control-Allow-Origin", "*")
     w.Header().Set("Access-Control-Allow-Methods", "GET,POST")
     w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+    w.Header().Set("Access-Control-Expose-Headers", "X-Rate-Limit,X-Rate-Limit-Remaining,X-Spin-Count")
   }
 }
 

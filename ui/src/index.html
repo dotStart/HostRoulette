@@ -26,6 +26,7 @@
             class="ui vertical very padded center aligned violet inverted segment">
         <section class="ui container">
           <roulette-wheel :settings="settings" v-on:spin="onSpin"
+                          v-on:count="onSpinCount"
                           v-on:result="acceptResult"
                           v-on:no-content="showNoContentWarning()"
                           v-on:error="onError"></roulette-wheel>

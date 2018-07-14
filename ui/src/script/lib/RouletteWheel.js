@@ -150,6 +150,8 @@ export default {
           this.spinning = true;
           this.velocity = Math.random() * VELOCITY_SPIN_RANGE
               + VELOCITY_SPIN_MINIMUM;
+
+          this.$emit('count', parseInt(response.headers['x-spin-count']));
         }).catch((error) => {
           this.loading = false;
 

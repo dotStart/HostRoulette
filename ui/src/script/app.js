@@ -54,7 +54,7 @@ const app = new Vue({
     // wheel
     result: null,
   },
-  mounted: function() {
+  mounted: function () {
     new ClipboardJS('#copy-button');
   },
   computed: {
@@ -116,6 +116,9 @@ const app = new Vue({
       } else {
         cb();
       }
+    },
+    onSpinCount: function (count) {
+      this.statistics.spins = count
     },
     onError: function (errorType) {
       switch (errorType) {
