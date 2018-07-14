@@ -21,14 +21,13 @@ build:
 
 docker:
   stage: deploy
-  image: docker:dind
+  image: docker:git
   services:
     - docker:dind
-  before_script:
-    - cd docker
+  script:
     - docker info
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-  script:
+    - cd docker
     - TAG_NAME=`git describe --exact-match --tags`
     - if [ -z "$TAG_NAME" ]; then TAG_NAME="ci-${CI_JOB_ID}"; else TAG_NAME="${TAG_NAME:1}"; fi
     - CI_SAFE_PROJECT_PATH=`echo ${CI_PROJECT_PATH} | tr '[:upper:]' '[:lower:]'`
