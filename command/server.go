@@ -82,7 +82,7 @@ func (s *ServerCommand) Execute(_ context.Context, f *flag.FlagSet, _ ...interfa
   cfg, err := config.LoadConfig(s.flagConfigFile)
   if err != nil {
     fmt.Fprintf(os.Stderr, "error: cannot load configuration: %s\n", err)
-    return 1;
+    return 1
   }
 
   listener, err := net.Listen("tcp", cfg.BindAddress)
