@@ -19,6 +19,7 @@ package config
 import (
   "fmt"
   "github.com/hashicorp/hcl2/hclparse"
+  "os"
 )
 import "github.com/hashicorp/hcl2/gohcl"
 
@@ -31,6 +32,15 @@ type ServerConfig struct {
 
 // loads a configuration file
 func LoadConfig(path string) (*ServerConfig, error) {
+  _, err := os.Stat(path)
+  if err != nil {
+    if os.IsNotExist(err) {
+      return nil, fmt.Errorf("failed to state configuration file: no such file or directory")
+    }
+
+    return nil, fmt.Errorf("failed to stat configuration file: %s", err)
+  }
+
   parser := hclparse.NewParser()
   file, diag := parser.ParseHCLFile(path)
   if diag.HasErrors() {
