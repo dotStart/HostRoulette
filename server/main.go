@@ -40,8 +40,6 @@ type Server struct {
   statisticsLock         sync.RWMutex
   twitchStatisticsTicker *time.Ticker
   twitchStatistics       *twitch.Statistics
-  statisticsResetTicker  *time.Ticker
-  spinCounter            uint64
 }
 
 func New(mux *http.ServeMux, search *search.Client, cacheClient *cache.Cache, twitchClient *twitch.Client) *Server {
@@ -54,12 +52,10 @@ func New(mux *http.ServeMux, search *search.Client, cacheClient *cache.Cache, tw
     twitchClient:           twitchClient,
     twitchStatisticsTicker: time.NewTicker(time.Minute * 30),
     twitchStatistics:       &twitch.Statistics{},
-    statisticsResetTicker:  time.NewTicker(time.Hour * 24),
   }
 
   srv.updateTwitchStatistics()
   go srv.tickUpdateTwitchStatistics()
-  go srv.tickResetStatistics()
 
   mux.HandleFunc("/api/community", srv.HandleGetCommunity)
   mux.HandleFunc("/api/game", srv.HandleGetGame)

@@ -19,18 +19,7 @@ package server
 import (
   "encoding/json"
   "net/http"
-  "sync/atomic"
 )
-
-// increments the internal wheel spin counter
-func (s *Server) incrementSpinCount() {
-  atomic.AddUint64(&s.spinCounter, 1)
-}
-
-// retrieves the total amount of spins today
-func (s *Server) getSpinCount() uint64 {
-  return atomic.LoadUint64(&s.spinCounter)
-}
 
 func (s *Server) tickUpdateTwitchStatistics() {
   for range s.twitchStatisticsTicker.C {
@@ -51,21 +40,6 @@ func (s *Server) updateTwitchStatistics() {
   s.twitchStatistics = stats
 }
 
-func (s *Server) tickResetStatistics() {
-  for range s.statisticsResetTicker.C {
-    s.resetStatistics()
-  }
-}
-
-func (s *Server) resetStatistics() {
-  s.statisticsLock.Lock()
-  defer s.statisticsLock.Unlock()
-
-  value := atomic.LoadUint64(&s.spinCounter)
-  s.logger.Infof("Resetting statistics - Processed %d spins in the last 24 hours", value)
-  atomic.StoreUint64(&s.spinCounter, 0)
-}
-
 func (s *Server) HandleStatistics(w http.ResponseWriter, req *http.Request) {
   if req.Method != "GET" || req.URL.Path != "/api/statistics" {
     http.NotFound(w, req)
@@ -76,12 +50,17 @@ func (s *Server) HandleStatistics(w http.ResponseWriter, req *http.Request) {
   twitchStats := s.twitchStatistics
   s.statisticsLock.RUnlock()
 
+  spins, err := s.cacheClient.GetSpinStatistic()
+  if err != nil {
+    s.logger.Errorf("failed to retrieve spin statistic: %s", err)
+  }
+
   stats := &struct {
     Spins    uint64 `json:"spins"`
     Channels uint64 `json:"channels"`
     Viewers  uint64 `json:"viewers"`
   }{
-    Spins:    s.getSpinCount(),
+    Spins:    spins,
     Channels: twitchStats.Channels,
     Viewers:  twitchStats.Viewers,
   }

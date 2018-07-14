@@ -82,6 +82,12 @@ func (s *Server) HandleWheel(w http.ResponseWriter, req *http.Request) {
     return
   }
 
+  count, err := s.cacheClient.IncrementSpinStatistic()
+  if err != nil {
+    s.logger.Error("failed to push spin count: %s", err)
+  }
+  w.Header().Set("X-Spin-Count", fmt.Sprintf("%d", count))
+
   streams, err := s.selectFilteredStreams(settings)
   if err != nil {
     s.logger.Errorf("failed to retrieve stream list: %s", err)
@@ -167,7 +173,6 @@ func (s *Server) HandleWheel(w http.ResponseWriter, req *http.Request) {
     streams = append(streams[:index], streams[index+1:]...)
   }
 
-  s.incrementSpinCount()
   w.Header().Set("Content-Type", "application/json")
   json.NewEncoder(w).Encode(&selection)
 }
