@@ -27,19 +27,28 @@ import (
 
 type Cache struct {
   logger *logging.Logger
-  client *redis.Client
+  client *redis.Ring
 }
 
 func New(cfg *config.CacheConfig) (*Cache, error) {
+  if len(cfg.Servers) == 0 {
+    return nil, fmt.Errorf("no cache servers available")
+  }
+
+  serverMap := make(map[string]string)
+  for _, srv := range cfg.Servers {
+    serverMap[srv.Name] = srv.Address
+  }
+
   var pw string
   if cfg.Password != nil {
     pw = *cfg.Password
   }
 
-  client := redis.NewClient(&redis.Options{
-    Addr:     cfg.Address,
+  client := redis.NewRing(&redis.RingOptions{
+    Addrs: serverMap,
     Password: pw,
-    DB:       cfg.Database,
+    DB: cfg.Database,
   })
 
   err := client.Ping().Err()

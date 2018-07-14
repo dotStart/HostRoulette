@@ -17,7 +17,13 @@
 package config
 
 type CacheConfig struct {
-  Address  string  `hcl:"address,attr"`
+  Servers []*CacheServerConfig `hcl:"server,block"`
+
   Password *string `hcl:"password,attr"`
   Database int     `hcl:"database,attr"`
+}
+
+type CacheServerConfig struct {
+  Name    string `hcl:"name,label"`
+  Address string `hcl:"address,attr"`
 }

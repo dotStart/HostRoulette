@@ -26,13 +26,10 @@ func (c *Cache) IncrementRateLimitUsage(addr string, ttl time.Duration) (uint64,
   c.logger.Debugf("incrementing rate limit usage for address \"%s\"", addr)
   key := fmt.Sprintf("rate_limit_%s", calculateHash(addr))
 
-  pipe := c.client.TxPipeline()
-  incr := pipe.Incr(key)
-  pipe.Expire(key, ttl)
-  _, err := pipe.Exec()
+  val, err := c.client.Incr(key).Result()
   if err != nil {
     return 0, err
   }
-
-  return uint64(incr.Val()), nil
+  err = c.client.Expire(key, ttl).Err()
+  return uint64(val), err
 }
