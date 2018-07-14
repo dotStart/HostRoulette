@@ -1,0 +1,37 @@
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  image: golang:1.10-alpine
+  before_script:
+    - apk add --update --no-cache git git-lfs dep make musl-dev nodejs npm
+    - mkdir -p /go/src/github.com/dotStart
+    - cp -r $CI_PROJECT_DIR /go/src/github.com/dotStart/$CI_PROJECT_NAME
+    - cd /go/src/github.com/dotStart/$CI_PROJECT_NAME
+  script:
+    - make
+  after_script:
+    - cp -r build/ $CI_PROJECT_DIR/
+  artifacts:
+    paths:
+      - build/*
+
+docker:
+  stage: deploy
+  image: docker:dind
+  before_script:
+    - cd docker
+    - docker info
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - TAG_NAME=`git describe --exact-match --tags`
+    - if [ -z "$TAG_NAME" ]; then TAG_NAME="ci-${CI_JOB_ID}"; else TAG_NAME="${TAG_NAME:1}"; fi
+    - CI_SAFE_PROJECT_PATH=`echo ${CI_PROJECT_PATH} | tr '[:upper:]' '[:lower:]'`
+    - ADDITIONAL_BUILD_OPTIONS=
+    - ADDITIONAL_DEPLOY_OPTIONS=
+    - if [ "${CI_COMMIT_REF_SLUG}" == "master" ]; then ADDITIONAL_BUILD_OPTIONS="-t ${CI_REGISTRY}/${CI_SAFE_PROJECT_PATH}"; fi
+    - if [ "${CI_COMMIT_REF_SLUG}" == "master" ]; then ADDITIONAL_DEPLOY_OPTIONS="${CI_REGISTRY}/${CI_SAFE_PROJECT_PATH}"; fi
+    - docker build -t "${CI_REGISTRY}/${CI_SAFE_PROJECT_PATH}:${TAG_NAME}" $ADDITIONAL_BUILD_OPTIONS
+    - docker push "${CI_REGISTRY}/${CI_SAFE_PROJECT_PATH}:${TAG_NAME}" $ADDITIONAL_DEPLOY_OPTIONS
