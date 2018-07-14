@@ -21,6 +21,8 @@ build:
 docker:
   stage: deploy
   image: docker:dind
+  services:
+    - docker:dind
   before_script:
     - cd docker
     - docker info
