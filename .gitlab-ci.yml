@@ -28,7 +28,7 @@ docker:
     - docker info
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
     - cd docker
-    - TAG_NAME=`git describe --exact-match --tags`
+    - TAG_NAME=`git describe --exact-match --tags || true`
     - if [ -z "$TAG_NAME" ]; then TAG_NAME="ci-${CI_JOB_ID}"; else TAG_NAME="${TAG_NAME:1}"; fi
     - CI_SAFE_PROJECT_PATH=`echo ${CI_PROJECT_PATH} | tr '[:upper:]' '[:lower:]'`
     - ADDITIONAL_BUILD_OPTIONS=
