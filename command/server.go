@@ -71,23 +71,23 @@ func (s *ServerCommand) SetFlags(f *flag.FlagSet) {
 func (s *ServerCommand) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
   level, err := logging.LogLevel(s.flagLogLevel)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "error: Illegal log level \"%s\": %s", s.flagLogLevel, err)
+    fmt.Fprintf(os.Stderr, "error: Illegal log level \"%s\": %s\n", s.flagLogLevel, err)
     return 1
   }
 
   if s.flagConfigFile == "" {
-    fmt.Fprintf(os.Stderr, "error: must specify a configuration file")
+    fmt.Fprintf(os.Stderr, "error: must specify a configuration file\n")
     return 1
   }
   cfg, err := config.LoadConfig(s.flagConfigFile)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "error: cannot load configuration: %s", err)
+    fmt.Fprintf(os.Stderr, "error: cannot load configuration: %s\n", err)
     return 1;
   }
 
   listener, err := net.Listen("tcp", cfg.BindAddress)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "error: cannot bind on address %s: %s", cfg.BindAddress, err)
+    fmt.Fprintf(os.Stderr, "error: cannot bind on address %s: %s\n", cfg.BindAddress, err)
     return 1
   }
 
@@ -108,17 +108,17 @@ func (s *ServerCommand) Execute(_ context.Context, f *flag.FlagSet, _ ...interfa
 
   srch, err := search.New(&cfg.Search)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "error: failed to connect to elasticsearch: %s", err)
+    fmt.Fprintf(os.Stderr, "error: failed to connect to elasticsearch: %s\n", err)
     return 1
   }
   cacheClient, err := cache.New(&cfg.Cache)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "error: failed to connect to cache backend: %s", err)
+    fmt.Fprintf(os.Stderr, "error: failed to connect to cache backend: %s\n", err)
     return 1
   }
   twitchClient, err := twitch.NewClient(&cfg.Auth)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "error: failed to establish connection with Twitch: %s", err)
+    fmt.Fprintf(os.Stderr, "error: failed to establish connection with Twitch: %s\n", err)
     return 1
   }
   updt := updater.New(srch, twitchClient)
@@ -133,7 +133,7 @@ func (s *ServerCommand) Execute(_ context.Context, f *flag.FlagSet, _ ...interfa
   api := server.New(mux, srch, cacheClient, twitchClient)
   if s.flagDevMode {
     api.CorsDisabled = true
-    s.logger.Debugf("development mode has been enabled")
+    s.logger.Warning("development mode has been enabled")
   }
 
   ui.Register(mux)
@@ -141,7 +141,7 @@ func (s *ServerCommand) Execute(_ context.Context, f *flag.FlagSet, _ ...interfa
   s.logger.Infof("Listening for requests on %s", cfg.BindAddress)
   err = srv.Serve(listener)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "error: failed to initialize http server: %s", err)
+    fmt.Fprintf(os.Stderr, "error: failed to initialize http server: %s\n", err)
   }
   return 0
 }
