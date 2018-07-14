@@ -6,7 +6,7 @@ Vagrant.configure("2") do |config|
 
   if ENV["docker"] == "true"
     config.vm.provider "virtualbox" do |v|
-      v.memory = 2048
+      v.memory = 512
       v.cpus = 2
     end
 
