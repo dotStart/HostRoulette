@@ -20,7 +20,11 @@ import "github.com/go-redis/redis"
 
 func (c *Cache) GetSpinStatistic() (uint64, error) {
   c.logger.Debugf("retrieving spin statistic")
-  return c.client.Get("statistic_spins").Uint64()
+  res, err := c.client.Get("statistic_spins").Uint64()
+  if err == redis.Nil {
+    return 0, nil
+  }
+  return res, err
 }
 
 func (c *Cache) IncrementSpinStatistic() (uint64, error) {
