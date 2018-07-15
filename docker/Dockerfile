@@ -12,7 +12,8 @@ RUN apk add --update --no-cache git git-lfs dep make musl-dev nodejs npm && \
 
 FROM alpine
 
-RUN mkdir -p /roulette-data && \
+RUN apk add --update --no-cache ca-certificates && \
+    mkdir -p /roulette-data && \
     addgroup roulette && \
     adduser -D -g "" -s /bin/false -G roulette roulette && \
     chown roulette:roulette /roulette-data
